@@ -111,6 +111,10 @@
                             [`(,op ,cname) cname])]
                    [m (lookup/method cname mname)])
               (apply/method m cname val vars fp σ κ next-stmt))]
+      [`(,varname new ,classname)
+            (let* ([op_ `(object ,classname ,(gensym))]
+                   [σ_ (extend σ fp varname op_)]
+                (state next-stmt fp σ_ κ)))]
       [`(,varname ,aexp)
             (let* ([val (atomic-eval aexp fp σ)]
                    [σ_ (extend σ fp varname val)]
