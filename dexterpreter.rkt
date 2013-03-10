@@ -71,6 +71,16 @@
              vars exps)])
     `(body ,fp_ ,σ_ ,κ_)))
 
+; throw exception handler
+(define (handle o fp σ ex)
+  (match `(,o ,ex)
+    [`((,op ,name) (,name_ ,l ,κ))  ; handler continuation
+      (if (isinstanceof name_ name)
+       `(,(lookup-label l) ,fp ,(extend σ fp "$ex" o) ,κ)
+       (handle o fp σ kont))]  ; non-handler continuation
+    [`(,val (,name ,s_ ,fp_ ,κ)) (handle val fp_ σ κ)]))
+
+
 ; AExp X FP X Store -> Value
 (define (atomic-eval aexp fp σ)
   (match aexp
