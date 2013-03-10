@@ -36,8 +36,18 @@
     [`((,addr . ,addrs) (,val . ,vals))
      (define $addr (gensym '$addr))
      (hash-set! σ $addr val)
-     (extend* (hash-set ρ addr $addr) addrs vals)]
-    [else ρ]))
+     (extend* (hash-set addr $addr) addrs vals)]))
+
+; global label store
+(define label-stor (make-hash))
+
+; update the label store
+(define (extend-label-stor label stmt)
+  (hash-set! label-stor label stmt))
+
+; lookup the statement from the label in the store
+(define (lookup-label label)
+  (hash-ref label-stor label))
 
 ; Apply continuation
 (define (apply-kont κ value σ)
