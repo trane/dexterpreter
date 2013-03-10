@@ -95,6 +95,12 @@
          [current-stmt (first stmts)]
          [next-stmt (rest stmts)])
     (match current-stmt
+      ; push and pop exception handlers
+      [`(pushhandler ,name ,l)
+        `(,next-stmt ,fp ,σ ,(cons `(,name ,l ,κ) κ))]
+      [`(pophandler)
+        `(,next-stmt ,fp ,σ ,(car κ))]
+      ; return statement
       [`(return ,e) (apply/κ κ (atomic-eval e fp σ) σ)]
       ; method invocation
       [`(invoke ,e ,mname ,vars)
