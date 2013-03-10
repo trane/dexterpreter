@@ -40,7 +40,7 @@
     (match `(,vars ,vals)
       [`((,var . ,vars) (,val . ,vals))
             (extend σ $fp var val)
-            (extend* σ fp vars vals)
+            (extend* σ fp vars vals)]
       [else σ])))
 
 ; global label store
@@ -72,8 +72,9 @@
         [fp_ (gensym fp)]
         [κ_ (apply/κ κ val σ)])
     (match m
-      [`(def ,name ,vars ,body)
-        (apply )
+      [`(def ,mname ,vars ,body)
+        (map (lambda (v e) (extend σ_ fp_ v (atomic-eval e fp σ))) vars e_)])))
+
 
 
 ; AExp X FP X Store -> Value
