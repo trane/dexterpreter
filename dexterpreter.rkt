@@ -6,7 +6,7 @@
 ;   store: map of addr->values (store)
 ;   continuation: a seq of frames denoting procedure return contexts and
 ;                 exception handlers for this machine (kont)
-(struct state {stmts fp store kont})
+(struct state {stmts fp stor kont})
 
 (define-match-expander return
   (syntax-rule ()
