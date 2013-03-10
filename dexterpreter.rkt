@@ -56,7 +56,7 @@
     ['(halt) '()]
     ; otherwise, we need to get our new state
     [`(,f ,stmts ,fp ,kaddr)
-      (let ([σ* (extend* σ ρ fp (lookup σ fp value))])
+      (let ([σ* (extend* σ fp (lookup σ fp value))])
           (state stmts σ* fp kaddr))]))
 
 ; Transition Function
