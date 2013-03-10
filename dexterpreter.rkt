@@ -78,7 +78,6 @@
              vars exps)])
     `(body ,fp_ ,σ_ ,κ_)))
 
-
 ; AExp X FP X Store -> Value
 (define (atomic-eval aexp fp σ)
   (match aexp
@@ -106,6 +105,12 @@
       ; return-{wide,object,}
       ; return only returns a value in a register vx, which is atomic
       [return (apply-kont κ vx σ)]
+      [`(invoke ,e ,mname ,vars)
+            (let* ([val (lookup σ fp "$this")]
+                   [cname (match val
+                            [`(,op ,cname) cname])]
+                   [m (lookup/method cname mname)])
+              (apply/method m cname val vars fp σ κ next-stmt))]
       [`(,varname ,aexp)
             (let* ([val (atomic-eval aexp fp σ)]
                    [σ_ (extend σ fp varname val)]
