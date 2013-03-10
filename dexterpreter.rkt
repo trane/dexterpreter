@@ -67,14 +67,16 @@
     ; the termination continuation
     ['(halt) ...]))
 
-(define (apply/method m name val e_ fp σ κ)
+(define (apply/method m name val exps fp σ κ)
   (let ([σ_ (extend σ fp name val)]
         [fp_ (gensym fp)]
         [κ_ (apply/κ κ val σ)])
     (match m
       [`(def ,mname ,vars ,body)
-        (map (lambda (v e) (extend σ_ fp_ v (atomic-eval e fp σ))) vars e_)])))
-
+        (map (lambda (v e)
+               (extend σ_ fp_ v (atomic-eval e fp σ)))
+             vars exps)])
+    `(body ,fp_ ,σ_ ,κ_)))
 
 
 ; AExp X FP X Store -> Value
