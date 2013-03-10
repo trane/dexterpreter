@@ -112,21 +112,27 @@
                             [`(,op ,cname) cname])]
                    [m '()]);(lookup/method cname mname)])
               (apply/method m cname val vars fp σ κ next-stmt))]
+      ; new object creation/assignment
       [`(,varname new ,classname)
             (let* ([op_ `(object ,classname ,(gensym))]
-                   [σ_ (extend σ fp varname op_)]
-                (state next-stmt fp σ_ κ)))]
+                   [σ_ (extend σ fp varname op_)])
+                (state next-stmt fp σ_ κ))]
+      ; assignment
       [`(,varname ,aexp)
             (let* ([val (atomic-eval aexp fp σ)]
-                   [σ_ (extend σ fp varname val)]
-                (state next-stmt fp σ_ κ)))]
+                   [σ_ (extend σ fp varname val)])
+                (state next-stmt fp σ_ κ))]
+      ; if-goto stmt
       [`(if ,e goto ,l)
         ;=>
         (if (atomic-eval e fp σ)
               (state (lookup-label l) fp σ κ)
               (state next-stmt fp σ κ))]
+      ; goto stmt
       [`(goto ,l) (state (lookup-label l) fp σ κ)]
+      ; skip stmt
       ['(nop) (state next-stmt fp σ κ)]
+      ; label stmt
       [`(label ,l)
             (extend-label-stor l next-stmt)
             (state next-stmt fp σ κ)])))
