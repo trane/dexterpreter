@@ -30,8 +30,8 @@
 (define (lookup σ fp var)
   (hash-ref σ (fp, var)))
 
-; extend environment and store with one or more values
-(define (extend* σ ρ addrs vals)
+; extend store with one or more values
+(define (extend* σ addrs vals)
   (match `(,addrs ,vals)
     [`((,addr . ,addrs) (,val . ,vals))
      (define $addr (gensym '$addr))
