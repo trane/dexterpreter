@@ -59,14 +59,14 @@
       (let ([σ* (extend* σ fp (lookup σ fp value))])
           (state stmts σ* fp kaddr))]))
 
-; Axp X FP X Store -> Value
-(define (atomic-eval e fp σ)
-  (match e
-    [(? atom?) e]
-    [else (lookup σ fp e)]))
+; AExp X FP X Store -> Value
+(define (atomic-eval aexp fp σ)
+  (match aexp
+    [(? atom?) aexp]
+    [else (lookup σ fp aexp)]))
 
-; Values
-(define (atom? a)
+; A helper to determine if these are plain values
+(define (atom? aexp)
   (match
     [(? void?) #t]
     [(? null?) #t]
