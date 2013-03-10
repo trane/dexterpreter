@@ -70,7 +70,7 @@
 (define (apply/method m name val exps fp σ κ)
   (let ([σ_ (extend σ fp name val)]
         [fp_ (gensym fp)]
-        [κ_ (apply/κ κ val σ)])
+        [κ_ `(,name ,(rest (lookup σ fp name)) ,fp ,κ)])
     (match m
       [`(def ,mname ,vars ,body)
         (map (lambda (v e)
