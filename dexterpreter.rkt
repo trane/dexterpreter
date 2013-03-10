@@ -110,7 +110,7 @@
             (let* ([val (lookup σ fp "$this")]
                    [cname (match val
                             [`(,op ,cname) cname])]
-                   [m (lookup/method cname mname)])
+                   [m '()]);(lookup/method cname mname)])
               (apply/method m cname val vars fp σ κ next-stmt))]
       [`(,varname new ,classname)
             (let* ([op_ `(object ,classname ,(gensym))]
