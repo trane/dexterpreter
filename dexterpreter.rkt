@@ -95,6 +95,7 @@
          [current-stmt (first stmts)]
          [next-stmt (rest stmts)])
     (match current-stmt
+      [`(return ,e) (apply/κ κ (atomic-eval e fp σ) σ)]
       ; method invocation
       [`(invoke ,e ,mname ,vars)
             (let* ([val (lookup σ fp "$this")]
