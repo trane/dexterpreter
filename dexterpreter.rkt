@@ -28,15 +28,16 @@
 
 ; lookup the value of the framepointer, variable
 (define (lookup σ fp var)
-  (hash-ref σ (fp, var)))
+  (hash-ref σ (fp var)))
 
 ; extend store with one or more values
-(define (extend* σ addrs vals)
-  (match `(,addrs ,vals)
-    [`((,addr . ,addrs) (,val . ,vals))
-     (define $addr (gensym '$addr))
-     (hash-set! σ $addr val)
-     (extend* (hash-set addr $addr) addrs vals)]))
+(define (extend σ fp v)
+  (hash-set! σ (fp v))
+
+(define (extend* σ fps vs)
+  (match `(,fps ,vs)
+    [`((,fp . ,fps) (,v . ,vs))
+          (extend* (extend σ fp v) fps vs)]))
 
 ; global label store
 (define label-stor (make-hash))
