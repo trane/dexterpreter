@@ -105,6 +105,8 @@
          [current-stmt (first stmts)]
          [next-stmt (rest stmts)])
     (match current-stmt
+      ; thrown exception
+      [`(throw ,e) (handle (atomic-eval e fp σ) fp σ κ)]
       ; push and pop exception handlers
       [`(pushhandler ,name ,l)
         `(,next-stmt ,fp ,σ ,(cons `(,name ,l ,κ) κ))]
