@@ -139,7 +139,7 @@
 
 (define (run state)
   (let ([step (next state)])
-    (if (eq? 'halt (kont step))
+    (if (eq? 'halt (state-kont step))
         step
         (run step))))
 
