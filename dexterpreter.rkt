@@ -73,6 +73,27 @@
     [(object ,classname ,op) (atomic-eval (lookup σ fp (op classname)))]
     [else (atomic-eval (lookup σ fp e))]))
 
+(define (next state)
+  ; extract the state struct's contents
+  (let* ([stmts (state-stmts state)]
+         [fp (state-fp state)]
+         [σ (state-stor state)]
+         [κ (state-kont state)]
+         [current-stmt (first stmts)]
+         [next-stmt (rest stmts)])
+    (match current-stmt
+      ; return-{wide,object,}
+      ; return only returns a value in a register vx, which is atomic
+      [return (apply-kont κ vx σ)]
+      [`(goto ,l) (state (lookup-label l) fp σ κ)]
+      ['(nop) (state next-stmt fp σ κ)]
+      [`(label ,l) (state next-stmt fp σ κ)])))
+
+(define (run state)
+  (let ([step (next state)])
+    (if (eq? 'halt (kont step))
+        step
+        (run step))))
 
 ; Opcodes we care about (in order):
 ; http://pallergabor.uw.hu/androidblog/dalvik_opcodes.html
