@@ -85,6 +85,11 @@
       ; return-{wide,object,}
       ; return only returns a value in a register vx, which is atomic
       [return (apply-kont κ vx σ)]
+      [`(if ,e goto ,l)
+        ;=>
+        (if (atomic-eval e fp σ)
+              (state (lookup-label l) fp σ κ)
+              (state next-stmt fp σ κ))]
       [`(goto ,l) (state (lookup-label l) fp σ κ)]
       ['(nop) (state next-stmt fp σ κ)]
       [`(label ,l)
