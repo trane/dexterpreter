@@ -61,9 +61,9 @@
     ['(halt) '()]))
 
 (define (apply/method m name val exps fp σ κ s)
-  (let ([σ_ (extend σ fp "$this" val)]
-        [fp_ (gensym fp)]
-        [κ_ `(,name ,s ,fp ,κ)])
+  (let* ([fp_ (gensym fp)]
+         [σ_ (extend σ fp_ "$this" val)]
+         [κ_ `(,name ,s ,fp ,κ)])
     (match m
       [`(def ,mname ,vars ,body)
         (map (lambda (v e)
