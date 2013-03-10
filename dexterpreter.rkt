@@ -50,14 +50,17 @@
   (hash-ref label-stor label))
 
 ; Apply continuation
-(define (apply-kont κ value σ)
+; Apply continuation
+(define (apply-kont κ val σ)
   (match κ
-    ; if this is the end, not sure what to return
-    ['(halt) '()]
-    ; otherwise, we need to get our new state
-    [`(,f ,stmts ,fp ,kaddr)
-      (let ([σ* (extend* σ fp (lookup σ fp value))])
-          (state stmts σ* fp kaddr))]))
+    ; assignment continuation
+    [`(,name ,next ,fp ,κ_)
+        (let ([σ_ (extend σ fp name val)])
+          (next fp σ_ κ_))]
+    ; handle continuation
+    [`(,classname ,label ,κ_) (apply-kont κ_ val σ)]
+    ; the termination continuation
+    ['(halt) ...]))
 
 ; AExp X FP X Store -> Value
 (define (atomic-eval aexp fp σ)
