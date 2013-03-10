@@ -35,8 +35,13 @@
     (hash-set! σ `(,fp ,var) val))
 
 ; extend store with one or more values
-(define (extend* σ fps vars vals)
-    (map (λ (fp var val) (extend σ fp var val)) fps vars vals))
+(define (extend* σ fp vars vals)
+  (let ([$fp (gensym fp)])
+    (match `(,vars ,vals)
+      [`((,var . ,vars) (,val . ,vals))
+            (extend σ $fp var val)
+            (extend* σ fp vars vals)
+      [else σ])))
 
 ; global label store
 (define label-stor (make-hash))
@@ -61,6 +66,15 @@
     [`(,classname ,label ,κ_) (apply/κ κ_ val σ)]
     ; the termination continuation
     ['(halt) ...]))
+
+(define (apply/method m name val e_ fp σ κ)
+  (let ([σ_ (extend σ fp name val)]
+        [fp_ (gensym fp)]
+        [κ_ (apply/κ κ val σ)])
+    (match m
+      [`(def ,name ,vars ,body)
+        (apply )
+
 
 ; AExp X FP X Store -> Value
 (define (atomic-eval aexp fp σ)
