@@ -64,7 +64,7 @@
     [(? void?) #t]
     [(? null?) #t]
     [(? boolean?) #t]
-    [(? number?) #t]
+    [(? integer?) #t]
     [else #f]))
 
 (define (atomic-eval e fp σ)
@@ -85,6 +85,10 @@
       ; return-{wide,object,}
       ; return only returns a value in a register vx, which is atomic
       [return (apply-kont κ vx σ)]
+      [`(,varname ,aexp)
+            (let* ([val (atomic-eval aexp fp σ)]
+                   [σ_ (extend σ fp varname val)]
+                (state next-stmt fp σ_ κ)))]
       [`(if ,e goto ,l)
         ;=>
         (if (atomic-eval e fp σ)
