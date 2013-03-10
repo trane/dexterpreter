@@ -59,16 +59,19 @@
       (let ([σ* (extend* σ fp (lookup σ fp value))])
           (state stmts σ* fp kaddr))]))
 
-; Transition Function
-(define (step expr ρ σ κ)
-    ; return-{wide,object,}
-    ; step(aexp,ρ,σ,κ)=applykont(κ,A(aexp,ρ,σ),σ))
-    ; return only returns a value in a register vx, which is atomic
-    [`(return ,vx) (apply-kont κ vx σ)]
-    [`(return-wide ,vx) (apply-kont κ vx σ)]
-    ; return a reference to an object, might need to look this up
-    [`(return-object ,vx) (apply-kont κ vx σ)]
-)
+(define (atom? a)
+  (match
+    [(? void?) #t]
+    [(? null?) #t]
+    [(? boolean?) #t]
+    [(? number?) #t]
+    [else #f]))
+
+(define (atomic-eval e fp σ)
+  (match e
+    [(? atom?) e]
+    [(object ,classname ,op) (atomic-eval (lookup σ fp (op classname)))]
+    [else (atomic-eval (lookup σ fp e))]))
 
 
 ; Opcodes we care about (in order):
