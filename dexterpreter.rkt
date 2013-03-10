@@ -86,7 +86,7 @@
 
 ; A helper to determine if these are plain values
 (define (atom? aexp)
-  (match
+  (match aexp
     [(? void?) #t]
     [(? null?) #t]
     [(? boolean?) #t]
