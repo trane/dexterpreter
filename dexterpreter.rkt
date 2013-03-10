@@ -8,7 +8,7 @@
 ;                 exception handlers for this machine (kont)
 (struct state {stmts fp stor kont})
 
-(define-match-expander return
+#;(define-match-expander return
   (syntax-rule ()
     [(_ v)
      (or `(return ,v)
@@ -104,7 +104,8 @@
     (match current-stmt
       ; return-{wide,object,}
       ; return only returns a value in a register vx, which is atomic
-      [return (apply-kont κ vx σ)]
+      [return (apply/κ κ 'vx σ)]
+      ; method invocation
       [`(invoke ,e ,mname ,vars)
             (let* ([val (lookup σ fp "$this")]
                    [cname (match val
