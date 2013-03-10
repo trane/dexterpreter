@@ -67,10 +67,10 @@
     ; the termination continuation
     ['(halt) ...]))
 
-(define (apply/method m name val exps fp σ κ)
-  (let ([σ_ (extend σ fp name val)]
+(define (apply/method m name val exps fp σ κ s)
+  (let ([σ_ (extend σ fp "$this" val)]
         [fp_ (gensym fp)]
-        [κ_ `(,name ,(rest (lookup σ fp name)) ,fp ,κ)])
+        [κ_ `(,name ,s ,fp ,κ)])
     (match m
       [`(def ,mname ,vars ,body)
         (map (lambda (v e)
