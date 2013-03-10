@@ -65,7 +65,7 @@
     ; handle continuation
     [`(,classname ,label ,κ_) (apply/κ κ_ val σ)]
     ; the termination continuation
-    ['(halt) ...]))
+    ['(halt) '()]))
 
 (define (apply/method m name val exps fp σ κ s)
   (let ([σ_ (extend σ fp "$this" val)]
