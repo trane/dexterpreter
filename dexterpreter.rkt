@@ -59,6 +59,13 @@
       (let ([σ* (extend* σ fp (lookup σ fp value))])
           (state stmts σ* fp kaddr))]))
 
+; Axp X FP X Store -> Value
+(define (atomic-eval e fp σ)
+  (match e
+    [(? atom?) e]
+    [else (lookup σ fp e)]))
+
+; Values
 (define (atom? a)
   (match
     [(? void?) #t]
@@ -66,12 +73,6 @@
     [(? boolean?) #t]
     [(? integer?) #t]
     [else #f]))
-
-(define (atomic-eval e fp σ)
-  (match e
-    [(? atom?) e]
-    [(object ,classname ,op) (atomic-eval (lookup σ fp (op classname)))]
-    [else (atomic-eval (lookup σ fp e))]))
 
 (define (next state)
   ; extract the state struct's contents
