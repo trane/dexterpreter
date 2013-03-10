@@ -87,7 +87,9 @@
       [return (apply-kont κ vx σ)]
       [`(goto ,l) (state (lookup-label l) fp σ κ)]
       ['(nop) (state next-stmt fp σ κ)]
-      [`(label ,l) (state next-stmt fp σ κ)])))
+      [`(label ,l)
+            (extend-label-stor l next-stmt)
+            (state next-stmt fp σ κ)])))
 
 (define (run state)
   (let ([step (next state)])
