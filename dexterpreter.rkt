@@ -51,14 +51,14 @@
 
 ; Apply continuation
 ; Apply continuation
-(define (apply-kont κ val σ)
+(define (apply/κ κ val σ)
   (match κ
     ; assignment continuation
     [`(,name ,next ,fp ,κ_)
         (let ([σ_ (extend σ fp name val)])
           (next fp σ_ κ_))]
     ; handle continuation
-    [`(,classname ,label ,κ_) (apply-kont κ_ val σ)]
+    [`(,classname ,label ,κ_) (apply/κ κ_ val σ)]
     ; the termination continuation
     ['(halt) ...]))
 
