@@ -106,9 +106,9 @@
          [next-stmt (rest stmts)])
     (match current-stmt
       ; catch exceptions
-      [`(move-exception ,ex)
+      [`(move-exception ,e)
           (let ([$ex (lookup σ fp "$ex")])
-            `(,next-stmt ,fp ,(extend σ fp $ex ex)))]
+            `(,next-stmt ,fp ,(extend σ fp $ex e)))]
       ; thrown exception
       [`(throw ,e) (handle (atomic-eval e fp σ) fp σ κ)]
       ; push and pop exception handlers
