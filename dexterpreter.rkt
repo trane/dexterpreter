@@ -7,17 +7,7 @@
 ;   continuation: a seq of frames denoting procedure return contexts and
 ;                 exception handlers for this machine (kont)
 (struct state {stmts fp stor kont})
-
-; ρ : env = symbol -> addr
-; σ : store = addr -> value
-; value = integer + boolean + clo + cont
-; clo ::= (clo <lam> <env>)
-; κ : kont ::= (letk <var> <exp> <env> <kont>)
-;           |  halt
-; cont ::= (cont <kont>)
-; addr = a set of unique addresses;
-;        for this machine, symbols work;
-;        gensym can create fresh addresses
+(define empty (make-hash))
 
 ; lookup the value of the framepointer, variable
 (define (lookup σ fp var)
@@ -37,7 +27,7 @@
       [else σ])))
 
 ; global label store
-(define label-stor (make-hash))
+(define label-stor (empty))
 
 ; update the label store
 (define (extend-label-stor label stmt)
@@ -60,6 +50,7 @@
     ; the termination continuation
     ['(halt) '()]))
 
+; method application
 (define (apply/method m name val exps fp σ κ s)
   (let* ([fp_ (gensym fp)]
          [σ_ (extend σ fp_ "$this" val)]
@@ -67,7 +58,7 @@
     (match m
       [`(def ,mname ,vars ,body)
         (map (lambda (v e)
-               (extend σ_ fp_ v (atomic-eval e fp σ)))
+               (extend σ_ fp_ v (eval/atomic e fp σ)))
              vars exps)])
     `(body ,fp_ ,σ_ ,κ_)))
 
@@ -82,10 +73,10 @@
 
 
 ; AExp X FP X Store -> Value
-(define (atomic-eval aexp fp σ)
+(define (eval/atomic aexp ptr σ)
   (match aexp
     [(? atom?) aexp]
-    [else (lookup σ fp aexp)]))
+    [else (lookup σ ptr aexp)]))
 
 ; A helper to determine if these are plain values
 (define (atom? aexp)
@@ -110,14 +101,14 @@
           (let ([$ex (lookup σ fp "$ex")])
             `(,next-stmt ,fp ,(extend σ fp $ex e)))]
       ; thrown exception
-      [`(throw ,e) (handle (atomic-eval e fp σ) fp σ κ)]
+      [`(throw ,e) (handle (eval/atomic e fp σ) fp σ κ)]
       ; push and pop exception handlers
       [`(pushhandler ,name ,l)
         `(,next-stmt ,fp ,σ ,(cons `(,name ,l ,κ) κ))]
       [`(pophandler)
         `(,next-stmt ,fp ,σ ,(car κ))]
       ; return statement
-      [`(return ,e) (apply/κ κ (atomic-eval e fp σ) σ)]
+      [`(return ,e) (apply/κ κ (eval/atomic e fp σ) σ)]
       ; method invocation
       [`(invoke ,e ,mname ,vars)
             (let* ([val (lookup σ fp "$this")]
@@ -132,13 +123,13 @@
                 (state next-stmt fp σ_ κ))]
       ; assignment
       [`(,varname ,aexp)
-            (let* ([val (atomic-eval aexp fp σ)]
+            (let* ([val (eval/atomic aexp fp σ)]
                    [σ_ (extend σ fp varname val)])
                 (state next-stmt fp σ_ κ))]
       ; if-goto stmt
       [`(if ,e goto ,l)
         ;=>
-        (if (atomic-eval e fp σ)
+        (if (eval/atomic e fp σ)
               (state (lookup-label l) fp σ κ)
               (state next-stmt fp σ κ))]
       ; goto stmt
