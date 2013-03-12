@@ -63,6 +63,18 @@
             (lookup/method (class-super class) name)
             (void)))))
 
+; return true if base is a subclass of super
+(define isinstanceof super base
+    (if (void? super)
+        #f  ; reached the top class
+        (if (equal? super base)
+            #t
+            (let* [class (lookup/class base)]
+                  [upper (lookup/class super)])
+              (if (equal? (class-super class) super)
+                  #t
+                  (isinstanceof (upper-super upper) super)))))
+
 ; Apply continuation
 (define (apply/κ κ val σ)
   (match κ
