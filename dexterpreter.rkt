@@ -39,12 +39,12 @@
 
 ; class struct
 ;   super -> a super classname or void
-;   fields := hash(field . var)
+;   fields := store((op field) . value)
 ;   methods := hash(name . struct)
 (struct class {super fields methods})
-(struct method {params body})
+(struct method {formals body})
 
-(define class-table empty)
+(define class-table (empty))
 
 (define (extend-class-table name class)
   (hash-set! class-table name class))
