@@ -64,16 +64,16 @@
             (void)))))
 
 ; return true if base is a subclass of super
-(define isinstanceof super base
+(define (isinstanceof super base)
     (if (void? super)
         #f  ; reached the top class
         (if (equal? super base)
             #t
-            (let* [class (lookup/class base)]
-                  [upper (lookup/class super)])
+            (let* ([class (lookup/class base)]
+                   [upper (lookup/class super)])
               (if (equal? (class-super class) super)
                   #t
-                  (isinstanceof (upper-super upper) super)))))
+                  (isinstanceof (class-super upper) super))))))
 
 ; Apply continuation
 (define (apply/κ κ val σ)
@@ -105,7 +105,7 @@
     [`((,op ,name) (,name_ ,l ,κ))  ; handler continuation
       (if (isinstanceof name_ name)
        `(,(lookup-label l) ,fp ,(extend σ fp "$ex" o) ,κ)
-       (handle o fp σ kont))]  ; non-handler continuation
+       (handle o fp σ κ))]  ; non-handler continuation
     [`(,val (,name ,s_ ,fp_ ,κ)) (handle val fp_ σ κ)]))
 
 
