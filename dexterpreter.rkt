@@ -52,6 +52,17 @@
 (define (lookup/class name)
   (hash-ref class-table name))
 
+; move up the class heir until you find a matching method
+(define (lookup/method classname name)
+  (let* ([class (lookup/class classname)]
+         [methods (class-methods class)]
+         [super (class-super class)])
+    (if (hash-has-key? methods name)
+        (hash-ref methods name)
+        (if (void? (class-super class))
+            (lookup/method (class-super class) name)
+            (void)))))
+
 ; Apply continuation
 (define (apply/κ κ val σ)
   (match κ
@@ -128,7 +139,7 @@
             (let* ([val (lookup σ fp "$this")]
                    [cname (match val
                             [`(,op ,cname) cname])]
-                   [m '()]);(lookup/method cname mname)])
+                   [m (lookup/method cname mname)])
               (apply/method m cname val vars fp σ κ next-stmt))]
       ; new object creation/assignment
       [`(,varname new ,classname)
