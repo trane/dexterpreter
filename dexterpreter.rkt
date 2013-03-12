@@ -37,7 +37,21 @@
 (define (lookup-label label)
   (hash-ref label-stor label))
 
-; Apply continuation
+; class struct
+;   super -> a super classname or void
+;   fields := hash(field . var)
+;   methods := hash(name . struct)
+(struct class {super fields methods})
+(struct method {params body})
+
+(define class-table empty)
+
+(define (extend-class-table name class)
+  (hash-set! class-table name class))
+
+(define (lookup/class name)
+  (hash-ref class-table name))
+
 ; Apply continuation
 (define (apply/κ κ val σ)
   (match κ
