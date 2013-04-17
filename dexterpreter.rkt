@@ -15,7 +15,8 @@
 
 ; extend store with one value
 (define (extend σ fp var val)
-    (hash-set! σ `(,fp ,var) val))
+  (printf "Extending store with ~s ~s ~s" fp var val)
+    (hash-set σ `(,fp ,var) val))
 
 ; extend store with one or more values
 (define (extend* σ fp vars vals)
@@ -27,10 +28,11 @@
       [else σ])))
 
 ; global label store
-(define label-stor (empty))
+(define label-stor (make-hash))
 
 ; update the label store
 (define (extend-label-stor label stmt)
+  (printf "Extending label store ~s ~s" label stmt)
   (hash-set! label-stor label stmt))
 
 ; lookup the statement from the label in the store
@@ -44,7 +46,7 @@
 (struct class {super fields methods})
 (struct method {formals body})
 
-(define class-table (empty))
+(define class-table (make-hash))
 
 (define (extend-class-table name class)
   (hash-set! class-table name class))
@@ -92,12 +94,11 @@
   (let* ([fp_ (gensym fp)]
          [σ_ (extend σ fp_ "$this" val)]
          [κ_ `(,name ,s ,fp ,κ)])
-    (match m
-      [`(def ,mname ,vars ,body)
-        (map (lambda (v e)
-               (extend σ_ fp_ v (eval/atomic e fp σ)))
-             vars exps)])
-    `(body ,fp_ ,σ_ ,κ_)))
+    (let ([σ* (car (map (lambda (v e) 
+                     (extend σ_ fp_ v (eval/atomic e fp σ)))
+                   (method-formals m) exps))])
+    
+      (state (method-body m) fp_ σ* κ_))))
 
 ; throw exception handler
 (define (handle o fp σ ex)
@@ -113,6 +114,7 @@
 (define (eval/atomic aexp ptr σ)
   (match aexp
     [(? atom?) aexp]
+    [`(,v ,op ,n) (opify (eval/atomic v ptr σ) op (eval/atomic n ptr σ))]
     [else (lookup σ ptr aexp)]))
 
 ; A helper to determine if these are plain values
@@ -124,12 +126,18 @@
     [(? integer?) #t]
     [else #f]))
 
-(define (next state)
+(define (opify lh op rh)
+  (match op
+    ['!= `(not (= lh rh))]
+    ['* `(* lh rh)]
+    ['- `(- lh rh)]))
+
+(define (next cur-state)
   ; extract the state struct's contents
-  (let* ([stmts (state-stmts state)]
-         [fp (state-fp state)]
-         [σ (state-stor state)]
-         [κ (state-kont state)]
+  (let* ([stmts (state-stmts cur-state)]
+         [fp (state-fp cur-state)]
+         [σ (state-stor cur-state)]
+         [κ (state-kont cur-state)]
          [current-stmt (first stmts)]
          [next-stmt (rest stmts)])
     (match current-stmt
@@ -148,21 +156,25 @@
       [`(return ,e) (apply/κ κ (eval/atomic e fp σ) σ)]
       ; method invocation
       [`(invoke ,e ,mname ,vars)
-            (let* ([val (lookup σ fp "$this")]
+            (let* ([val (lookup σ fp e)]
                    [cname (match val
-                            [`(,op ,cname) cname])]
+                            [`(object ,cname ,fp) cname])]
                    [m (lookup/method cname mname)])
               (apply/method m cname val vars fp σ κ next-stmt))]
       ; new object creation/assignment
-      [`(,varname new ,classname)
+      [`(,varname = new ,classname)
             (let* ([op_ `(object ,classname ,(gensym))]
                    [σ_ (extend σ fp varname op_)])
                 (state next-stmt fp σ_ κ))]
+      ; label stmt
+      [`(label ,l)
+            (state next-stmt fp σ κ)]
       ; assignment
-      [`(,varname ,aexp)
+      [`(,varname = ,aexp)
             (let* ([val (eval/atomic aexp fp σ)]
                    [σ_ (extend σ fp varname val)])
                 (state next-stmt fp σ_ κ))]
+
       ; if-goto stmt
       [`(if ,e goto ,l)
         ;=>
@@ -172,45 +184,67 @@
       ; goto stmt
       [`(goto ,l) (state (lookup-label l) fp σ κ)]
       ; skip stmt
-      ['(nop) (state next-stmt fp σ κ)]
-      ; label stmt
-      [`(label ,l)
-            (extend-label-stor l next-stmt)
-            (state next-stmt fp σ κ)])))
+      ['(nop) (state next-stmt fp σ κ)])))
+
+(define (parse-program program)
+  (match program
+    [`(program . ,exps) (map eval-program-exps exps)]
+    [else (error "Not a program ~s" program)]))
+
+(define (eval-program-exps exps)
+  (match exps
+    [`(class ,name . ,defs)
+        ; =>
+        (let ([fields '()]
+              [methods (make-hash)])
+          (map (lambda (d) (eval-def d fields methods)) defs)
+          (extend-class-table name (class void fields methods)))]
+    [`(class ,name extends ,super ,defs)
+        ; =>
+        (let ([fields '()]
+              [methods (make-hash)])
+          (map (lambda (d) (eval-def d fields methods)) defs)
+          (extend-class-table name (class super fields methods)))]
+    [else (error "No program exps ~s" exps)]))
+
+(define (eval-def def fields methods)
+  (match def
+    [`(def ,name ,args ,body)
+        (eval-meth-body body)
+        (hash-set! methods name (method args body))]
+    [`(var ,name) (cons `(,name ,void) fields)]))
+
+(define (eval-meth-body body)
+    (match body
+      [`() label-stor]
+      [`((label ,l) . ,rest) (extend-label-stor l rest) (eval-meth-body rest)]
+      [`(,blah . ,rest) (eval-meth-body rest)]))
+
+(define empty-fp (gensym))
+
+(define (inject stmt)
+  (state stmt empty-fp (make-immutable-hash) 'halt))
 
 (define (run state)
   (let ([step (next state)])
-    (if (eq? 'halt (state-kont step))
-        step
-        (run step))))
+    ;(if (eq? 'halt (state-kont step))
+    ;    step
+        (run step)))
 
-; Opcodes we care about (in order):
-; http://pallergabor.uw.hu/androidblog/dalvik_opcodes.html
 
-; move
-; return
-; const
-; monitor
-; switch
-; instance-of
-; array-length
-; new-array
-; throw
-; goto
-; switch
-; compare
-; conditions/branches
-; array get
-; array put
-; instance get
-; instance put
-; static get
-; static put
-; invoke
-; conversion
-; arithmetic operations
-; arithmetic and store
-; *-quick
+(define factorialprog
+  '(program
+    (class F
+        (def fact(n)((if (n != 1) goto next)
+                     (return n)
+                     (label next)
+                     (return (n * (invoke this fact(n-1)))))))))
+(define factorialstmt
+    '((f = new F)
+      (invoke f fact (5))))
 
+(parse-program factorialprog)
+(define s0 (inject factorialstmt))
+(run s0)
 
 ; vim: tabstop=2 shiftwidth=2 softtabstop=2
