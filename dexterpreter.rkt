@@ -94,10 +94,9 @@
   (let* ([fp_ (gensym fp)]
          [σ_ (extend σ fp_ "$this" val)]
          [κ_ `(,name ,s ,fp ,κ)])
-    (let ([σ* (car (map (lambda (v e) 
+    (let ([σ* (car (map (lambda (v e)
                      (extend σ_ fp_ v (eval/atomic e fp σ)))
                    (method-formals m) exps))])
-    
       (state (method-body m) fp_ σ* κ_))))
 
 ; throw exception handler
@@ -166,15 +165,20 @@
             (let* ([op_ `(object ,classname ,(gensym))]
                    [σ_ (extend σ fp varname op_)])
                 (state next-stmt fp σ_ κ))]
-      ; label stmt
-      [`(label ,l)
-            (state next-stmt fp σ κ)]
-      ; assignment
+      ; assignment aexp
       [`(,varname = ,aexp)
             (let* ([val (eval/atomic aexp fp σ)]
                    [σ_ (extend σ fp varname val)])
                 (state next-stmt fp σ_ κ))]
+      ; assignment cexp
+      [`(,varname = (invoke ,e ,mname, vars))
+            (let* ([val (eval/atomic aexp fp σ)]
+                   [σ_ (extend σ fp varname val)])
+                (state next-stmt fp σ_ κ))]
 
+      ; label stmt
+      [`(label ,l)
+            (state next-stmt fp σ κ)]
       ; if-goto stmt
       [`(if ,e goto ,l)
         ;=>
